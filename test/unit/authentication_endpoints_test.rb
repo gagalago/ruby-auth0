@@ -477,10 +477,10 @@ class AuthenticationEndpointsTest < Minitest::Test
     url = @client_secret_instance.send(:par_authorization_url, request_uri)
 
     parsed = URI.parse(url.to_s)
-    params = CGI.parse(parsed.query)
+    params = URI.decode_www_form(parsed.query).to_h
 
-    assert_equal @client_id, params["client_id"].first
-    assert_equal request_uri, params["request_uri"].first
+    assert_equal @client_id, params["client_id"]
+    assert_equal request_uri, params["request_uri"]
     assert_equal "/authorize", parsed.path
     assert_equal @domain, parsed.host
   end
