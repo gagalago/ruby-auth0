@@ -65,9 +65,9 @@ module Auth0
           grant_type: 'authorization_code',
           client_id: client_id,
           code: code,
-          redirect_uri: redirect_uri
+          redirect_uri: redirect_uri,
+          code_verifier: code_verifier
         }
-        request_params[:code_verifier] = code_verifier unless code_verifier.nil?
 
         populate_client_assertion_or_secret(request_params, client_id: client_id, client_secret: client_secret)
 
