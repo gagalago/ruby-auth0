@@ -48,12 +48,16 @@ module Auth0
       # @param client_id [string] Client ID for the application
       # @param client_secret [string] Client secret for the application. Ignored if using Client Assertion
       #   Required only if it was set at the GET /authorize endpoint
+      # @param code_verifier [string] Cryptographically random key used to generate the
+      #   code_challenge passed to GET /authorize. Required for the Authorization Code Flow
+      #   with PKCE.
       # @return [Auth0::AccessToken] Returns the access_token and id_token
       def exchange_auth_code_for_tokens(
         code,
         redirect_uri: nil,
         client_id: @client_id,
-        client_secret: @client_secret
+        client_secret: @client_secret,
+        code_verifier: nil
       )
         raise Auth0::InvalidParameter, 'Must provide an authorization code' if code.to_s.empty?
 
@@ -61,7 +65,8 @@ module Auth0
           grant_type: 'authorization_code',
           client_id: client_id,
           code: code,
-          redirect_uri: redirect_uri
+          redirect_uri: redirect_uri,
+          code_verifier: code_verifier
         }
 
         populate_client_assertion_or_secret(request_params, client_id: client_id, client_secret: client_secret)

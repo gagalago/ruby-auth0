@@ -177,6 +177,77 @@ class AuthenticationEndpointsTest < Minitest::Test
     refute_nil result.access_token
   end
 
+  def test_exchange_auth_code_for_tokens_with_code_verifier
+    stub_request(:post, "https://#{@domain}/oauth/token")
+      .with do |req|
+        body = JSON.parse(req.body, symbolize_names: true)
+        body[:grant_type] == "authorization_code" &&
+          body[:code] == "the_auth_code" &&
+          body[:code_verifier] == "the_code_verifier"
+      end
+      .to_return(
+        status: 200,
+        body: { "id_token" => "id_token", "access_token" => "test_access_token", "expires_in" => 86_400 }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    result = @client_secret_instance.send(
+      :exchange_auth_code_for_tokens, "the_auth_code", code_verifier: "the_code_verifier"
+    )
+
+    assert_kind_of Auth0::AccessToken, result
+    refute_nil result.access_token
+  end
+
+  def test_exchange_auth_code_for_tokens_sends_null_code_verifier_when_not_provided
+    stub_request(:post, "https://#{@domain}/oauth/token")
+      .with do |req|
+        body = JSON.parse(req.body, symbolize_names: true)
+        body.key?(:code_verifier) && body[:code_verifier].nil?
+      end
+      .to_return(
+        status: 200,
+        body: { "id_token" => "id_token", "access_token" => "test_access_token", "expires_in" => 86_400 }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    result = @client_secret_instance.send(:exchange_auth_code_for_tokens, "the_auth_code")
+
+    assert_kind_of Auth0::AccessToken, result
+    refute_nil result.access_token
+  end
+
+  def test_exchange_auth_code_for_tokens_with_code_verifier_on_a_public_client
+    public_client = DummyClassForTokens.new(
+      domain: @domain,
+      client_id: @client_id,
+      client_secret: nil,
+      token: "test",
+      api_identifier: @api_identifier
+    )
+
+    stub_request(:post, "https://#{@domain}/oauth/token")
+      .with do |req|
+        body = JSON.parse(req.body, symbolize_names: true)
+        body[:grant_type] == "authorization_code" &&
+          body[:code_verifier] == "the_code_verifier" &&
+          body[:client_secret].nil? &&
+          body[:client_assertion].nil?
+      end
+      .to_return(
+        status: 200,
+        body: { "id_token" => "id_token", "access_token" => "test_access_token", "expires_in" => 86_400 }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    result = public_client.send(
+      :exchange_auth_code_for_tokens, "the_auth_code", code_verifier: "the_code_verifier"
+    )
+
+    assert_kind_of Auth0::AccessToken, result
+    refute_nil result.access_token
+  end
+
   # --- exchange_refresh_token ---
 
   def test_exchange_refresh_token_with_client_secret
