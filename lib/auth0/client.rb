@@ -128,6 +128,11 @@ module Auth0
       @network_acls ||= Auth0::NetworkACLs::Client.new(client: @raw_client)
     end
 
+    # @return [Auth0::OrganizationTemplates::Client]
+    def organization_templates
+      @organization_templates ||= Auth0::OrganizationTemplates::Client.new(client: @raw_client)
+    end
+
     # @return [Auth0::Organizations::Client]
     def organizations
       @organizations ||= Auth0::Organizations::Client.new(client: @raw_client)
